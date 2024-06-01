@@ -1,49 +1,30 @@
-import React from 'react';
-import {
-  BrowserRouter as Router,
-  Route,
-  Link,
-  Switch
-} from 'react-router-dom';
-import Deposit from './Deposit';
-import Savings from './Savings';
+import React, { useMemo } from 'react';
 
-const App: React.FC = () => {
-  return (
-    <Router>
-      <div>
-        <header>
-          <h1>DeFiSavings</h1>
-          <nav>
-            <ul>
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>
-                <Link to="/deposit">Deposit</Link>
-              </li>
-              <li>
-                <Link to="/savings">Savings</Link>
-              </li>
-            </ul>
-          </nav>
-        </header>
-        <Switch>
-          <Route path="/deposit">
-            <Deposit />
-          </Route>
-          <Route path="/savings">
-            <Savings />
-          </Route>
-          <Route path="/">
-            <Home />
-          </Route>
-        </Switch>
-      </div>
-    </Router>
-  );
+const heavyCalculation = (num: number): number => {
+  console.log('Performing heavy calculation...');
+  return num * 2; 
+};
+
+const HeavyComponent: React.FC<{ num: number }> = ({ num }) => {
+  const memoizedValue = useMemo(() => heavyCalculation(num), [num]);
+
+  return <div>Result: {memoizedValue}</div>;
+};
+```
+```typescript
+function memoize(fn) {
+  const cache = {};
+  return function(...args) {
+    const key = args.toString();
+    if (cache[key]) {
+      return cache[key];
+    }
+    cache[key] = fn(...args);
+    return cache[key];
+  };
 }
 
-const Home: React.FC = () => <div>Welcome to DeFiSavings</div>;
-
-export default App;
+const expensiveOperation = memoize(function(num) {
+  console.log('Expensive calculation...');
+  return num + 1;
+});
