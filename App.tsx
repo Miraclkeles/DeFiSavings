@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 const heavyCalculation = (num: number): number => {
   console.log('Performing heavy calculation...');
-  return num * 2; 
+  return num * 2;
 };
 
 const HeavyComponent: React.FC<{ num: number }> = ({ num }) => {
@@ -10,21 +10,24 @@ const HeavyComponent: React.FC<{ num: number }> = ({ num }) => {
 
   return <div>Result: {memoizedValue}</div>;
 };
-```
-```typescript
-function memoize(fn) {
-  const cache = {};
-  return function(...args) {
+
+type Func<T extends any[], R> = (...args: T) => R;
+
+function memoize<T extends any[], R>(fn: Func<T, R>): Func<T, R> {
+  const cache: Record<string, R> = {};
+
+  return function(...args: T): R {
     const key = args.toString();
-    if (cache[key]) {
+    if (key in cache) {
       return cache[key];
     }
-    cache[key] = fn(...args);
-    return cache[key];
+    const result = fn(...args);
+    cache[key] = result;
+    return result;
   };
 }
 
-const expensiveOperation = memoize(function(num) {
+const expensiveOperation = memoize((num: number) => {
   console.log('Expensive calculation...');
   return num + 1;
 });
