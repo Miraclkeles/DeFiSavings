@@ -5,26 +5,30 @@ interface DepositProps {
   depositFunction: (amount: string) => Promise<void>;
 }
 
-const DepositComponent: React.FC<DepositProps> = ({ savingsContractAddress, depositFunction }) => {
+const DepositComponent: React.FC<DepositComponentProps> = ({
+  savingsContractAddress,
+  depositFunction,
+}) => {
   const [depositAmount, setDepositAmount] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
 
   const handleDeposit = async () => {
+    setMessage('');
+    setError('');
+  
+    if (isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
+      setError('Please enter a valid deposit amount.');
+      return;
+    }
+  
     try {
-      setMessage('');
-      setError('');
-
-      if (isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
-        setError('Please enter a valid deposit amount.');
-        return;
-      }
-
       await depositFunction(depositAmount);
       setMessage('Deposit successfully made!');
       setDepositAmount('');
     } catch (err) {
-      setError((err as Error).message || 'An error occurred while making the deposit.');
+      const errorMessage = (err as Error).message || 'An error occurred while making the deposit.';
+      setError(errorMessage);
     }
   };
 
