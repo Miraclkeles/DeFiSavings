@@ -1,51 +1,51 @@
 import React, { useState } from 'react';
 
 interface DepositProps {
-  savingsContractAddress: string;
-  depositFunction: (amount: string) => Promise<void>;
+  contractAddress: string;
+  performDeposit: (amount: string) => Promise<void>;
 }
 
-const DepositComponent: React.FC<DepositComponentProps> = ({
-  savingsContractAddress,
-  depositFunction,
+const DepositForm: React.FC<DepositProps> = ({
+  contractAddress,
+  performDeposit,
 }) => {
-  const [depositAmount, setDepositAmount] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [amountToDeposit, setAmountToDeposit] = useState<string>('');
+  const [responseMessage, setResponseMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const handleDeposit = async () => {
-    setMessage('');
-    setError('');
+  const handleDepositClick = async () => {
+    setResponseMessage('');
+    setErrorMessage('');
   
-    if (isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
-      setError('Please enter a valid deposit amount.');
+    if (isNaN(Number(amountToDeposit)) || Number(amountToDeposit) <= 0) {
+      setErrorMessage('Invalid deposit amount. Please enter a positive number.');
       return;
     }
   
     try {
-      await depositFunction(depositAmount);
-      setMessage('Deposit successfully made!');
-      setDepositAmount('');
+      await performDeposit(amountToDeposit);
+      setResponseMessage('Deposit completed successfully!');
+      setAmountToDeposit('');
     } catch (err) {
-      const errorMessage = (err as Error).message || 'An error occurred while making the deposit.';
-      setError(errorMessage);
+      const errorText = (err as Error).message || 'Failed to complete the deposit.';
+      setErrorMessage(errorText);
     }
   };
 
   return (
     <div>
-      <p>Deposit into contract at: {savingsContractAddress}</p>
+      <p>Deposit Address: {contractAddress}</p>
       <input
         type="text"
-        value={depositAmount}
-        onChange={(e) => setDepositAmount(e.target.value)}
-        placeholder="Enter deposit amount"
+        value={amountToDeposit}
+        onChange={(e) => setAmountToDeposit(e.target.value)}
+        placeholder="Deposit Amount"
       />
-      <button onClick={handleDeposit}>Deposit</button>
-      {message && <div style={{ color: 'green' }}>{message}</div>}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <button onClick={handleDepositClick}>Make Deposit</button>
+      {responseMessage && <div style={{ color: 'green' }}>{responseMessage}</div>}
+      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
     </div>
   );
 };
 
-export default DepositComponent;
+export default DepositForm;
