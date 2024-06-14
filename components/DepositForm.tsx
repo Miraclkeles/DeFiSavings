@@ -1,61 +1,64 @@
 import React, { useState } from 'react';
 
-interface DepositProps {
-  contractAddress: string;
-  performDeposit: (currency: string, amount: string) => Promise<void>;
+interface DepositFormProps {
+  depositContractAddress: string;
+  executeDepositTransaction: (currency: string, depositAmount: string) => Promise<void>;
 }
 
-const DepositForm: React.FC<DepositProps> = ({
-  contractAddress,
-  performDeposit,
+const DepositForm: React.FC<DepositFormProps> = ({
+  depositContractAddress,
+  executeDepositTransaction,
 }) => {
-  const [amountToDeposit, setAmountToDeposit] = useState<string>('');
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('ETH'); // Default currency
-  const [responseMessage, setResponseMessage] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [depositAmount, setDepositAmount] = useState<string>('');
+  const [currencySelection, setCurrencySelection] = useState<string>('ETH'); // Default currency is ETH
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorFeedback, setErrorFeedback] = useState<string>('');
 
-  const currencies = ['ETH', 'DAI', 'USDC']; // Example currencies
+  const supportedCurrencies = ['ETH', 'DAI', 'USDC']; // Extendable list of supported currencies
 
-  const handleDepositClick = async () => {
-    setResponseMessage('');
-    setErrorMessage('');
+  const handleDepositAction = async () => {
+    setSuccessMessage('');
+    setErrorFeedback('');
 
-    if (isNaN(Number(amountToDeposit)) || Number(amountToDeposit) <= 0) {
-      setErrorMessage('Invalid deposit amount. Please enter a positive number.');
+    if (isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
+      setErrorFeedback('Invalid amount. Please enter a positive number for the deposit.');
       return;
     }
 
     try {
-      await performDeposit(selectedCurrency, amountToDeposit);
-      setResponseMessage(`Deposit of ${amountToDeposit} ${selectedCurrency} completed successfully!`);
-      setAmountToDeposit('');
-    } catch (err) {
-      const errorText = (err as Error).message || 'Failed to complete the deposit.';
-      setErrorMessage(errorText);
+      await executeDepositTransaction(currencySelection, depositAmount);
+      setSuccessMessage(`Successfully deposited ${depositA-mount} ${currencySelection}!`);
+      setDepositAmount(''); // Reset input field
+    } catch (errorInstance) {
+      const encounteredError = (errorInstance as Error).mess-ge || 'The deposit transaction failed.';
+      setErrorFeedback(encounteredError);
     }
   };
 
   return (
     <div>
-      <p>Deposit Address: {contractAddress}</p>
+      <p>Contract Address for Deposit: {depositContractAddress}</p>
       <div>
-        <select value={selectedCurrency} onChange={e => setSelectedCurrency(e.target.value)}>
-          {currencies.map(currency => (
-            <option key={currency} value={currency}>
-              {currency}
+        <select
+          value={currencySelection}
+          onChange={(event) => setCurrencySelection(event.target.value)}
+        >
+          {supportedCurrencies.map((currencyName) => (
+            <option key={currencyName} value={currencyName}>
+              {currencyName}
             </option>
           ))}
         </select>
       </div>
       <input
         type="text"
-        value={amountToDeposit}
-        onChange={e => setAmountToDeposit(e.target.value)}
-        placeholder="Deposit Amount"
+        value={depositAmount}
+        onChange={(event) => setDepositAmount(event.target.value)}
+        placeholder="Amount to Deposit"
       />
-      <button onClick={handleDepositClick}>Make Deposit</button>
-      {responseMessage && <div style={{ color: 'green' }}>{responseMessage}</div>}
-      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+      <button onClick={handleDepositAction}>Execute Deposit</button>
+      {successMessage && <div style={{ color: 'green' }}>{successMessage}</div>}
+      {errorFeedback && <div style={{ color: 'red' }}>{errorFeedback}</div>}
     </div>
   );
 };
