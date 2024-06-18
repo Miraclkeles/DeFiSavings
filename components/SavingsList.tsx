@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
 
-interface Saving {
+interface SavingAccount {
   id: string;
   amount: number;
   interestEarned: number;
 }
 
-interface FetchError {
+interface APIError {
   message: string;
 }
 
 const SavingsList: React.FC = () => {
-  const [savings, setSavings] = useState<Saving[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<FetchError | null>(null);
+  const [savingsAccounts, setSavingsAccounts] = useState<SavingAccount[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<APIError | null>(null);
 
-  const fetchSavings = async () => {
+  const fetchSavingsAccounts = async () => {
     try {
       const response = await fetch('https://your-blockchain-api/savings', {
         headers: {
@@ -25,38 +25,38 @@ const SavingsList: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch savings');
+        throw new Error('Failed to fetch savings accounts');
       }
 
-      const data: Saving[] = await response.json();
-      setSavings(data);
+      const accountsData: SavingAccount[] = await response.json();
+      setSavingsAccounts(accountsData);
     } catch (error: any) {
-      setError({ message: error.message || 'Failed to fetch data' });
+      setApiError({ message: error.message || 'Failed to fetch data' });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSavings();
+    fetchSavingsAccounts();
   }, []);
 
-  if (loading) return <div>Loading savings...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <div>Loading savings accounts...</div>;
+  if (apiError) return <div>Error: {apiError.message}</div>;
 
   return (
     <div>
-      <h2>Savings List</h2>
-      {savings.length > 0 ? (
+      <h2>Savings Accounts</h2>
+      {savingsAccounts.length > 0 ? (
         <ul>
-          {savings.map((saving) => (
-            <li key={saving.id}>
-              Amount: {saving.amount}, Interest Earned: {saving.interestEarned}
+          {savingsAccounts.map((account) => (
+            <li key={account.id}>
+              Amount: {account.amount}, Interest Earned: {account.interestEarned}
             </li>
           ))}
         </ul>
       ) : (
-        <p>No savings found.</p>
+        <p>No savings accounts found.</p>
       )}
     </div>
   );
