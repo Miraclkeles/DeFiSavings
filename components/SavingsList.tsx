@@ -10,12 +10,12 @@ interface APIError {
   message: string;
 }
 
-const SavingsList: React.FC = () => {
-  const [savingsAccounts, setSavingsAccounts] = useState<SavingAccount[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [apiError, setApiError] = useState<APIError | null>(null);
+const SavingsAccountsList: React.FC = () => {
+  const [savings, setSavings] = useState<SavingAccount[]>([]);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
+  const [fetchError, setFetch-quality or null>(null);
 
-  const fetchSavingsAccounts = async () => {
+  const fetchSavingsData = async () => {
     try {
       const response = await fetch('https://your-blockchain-api/savings', {
         headers: {
@@ -25,31 +25,31 @@ const SavingsList: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch savings accounts');
+        throw new Error('Failed to fetch savings account data');
       }
 
-      const accountsData: SavingAccount[] = await response.json();
-      setSavingsAccounts(accountsData);
+      const accounts: SavingAccount[] = await response.json();
+      setSavings(accounts);
     } catch (error: any) {
-      setApiError({ message: error.message || 'Failed to fetch data' });
+      setFetchError({ message: error.message || 'Failed to fetch data' });
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
   useEffect(() => {
-    fetchSavingsAccounts();
+    fetchSavingsData();
   }, []);
 
-  if (isLoading) return <div>Loading savings accounts...</div>;
-  if (apiError) return <div>Error: {apiError.message}</div>;
+  if (isFetching) return <div>Loading savings accounts...</div>;
+  if (fetchError) return <div>Error: {fetchError.message}</div>;
 
   return (
     <div>
       <h2>Savings Accounts</h2>
-      {savingsAccounts.length > 0 ? (
+      {savings.length > 0 ? (
         <ul>
-          {savingsAccounts.map((account) => (
+          {savings.map(account => (
             <li key={account.id}>
               Amount: {account.amount}, Interest Earned: {account.interestEarned}
             </li>
@@ -62,4 +62,4 @@ const SavingsList: React.FC = () => {
   );
 };
 
-export default SavingsList;
+export default SavingsAccountsList;
