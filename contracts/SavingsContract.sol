@@ -1,67 +1,61 @@
 pragma solidity ^0.8.0;
 
-contract SavingsContract {
-    address public owner;
-    uint256 public interestRate;
-    mapping(address => uint256) public balances;
-    mapping(address => uint256) public interestEarned;
+contract DeFiSavingsContract {
+    address public contractOwner;
+    uint256 public annualInterestRatePercentage;
+    mapping(address => uint256) public accountBalances;
+    mapping(address => uint256) public accountInterestEarnings;
 
-    event Deposit(address indexed account, uint256 amount);
-    event Withdrawal(address indexed account, uint256 amount);
-    event InterestPaid(address indexed account, uint256 interest);
-    event InterestRateChanged(uint256 newInterestRate);
+    event EtherDeposited(address indexed depositorAccount, uint256 amountDeposited);
+    event EtherWithdrawn(address indexed withdrawerAccount, uint256 amountWithdrawn);
+    event InterestAccrued(address indexed beneficiaryAccount, uint256 interestAmount);
+    event AnnualInterestRateUpdated(uint256 newAnnualInterestRatePercentage);
 
-    constructor(uint256 _initialInterestRate) {
-        owner = msg.sender;
-        interestRate = _initialInterestRate;
+    constructor(uint256 _initialInterestRatePercentage) {
+        contractOwner = msg.sender;
+        annualInterestRatePercentage = _initialInterestRatePercentage;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can perform this action.");
+    modifier onlyContractOwner() {
+        require(msg.sender == contractOwner, "Only the contract owner can perform this action.");
         _;
     }
 
-    modifier hasFunds(uint256 _amount) {
-        require(balances[msg.sender] >= _amount, "Insufficient funds.");
+    modifier ensuresFundsAvailability(uint256 _withdrawalAmount) {
+        require(accountBalances[msg.sender] >= _withdrawalAmount, "Insufficient funds in the account.");
         _;
     }
 
-    function deposit() public payable {
-        require(msg.value > 0, "You must deposit a positive amount of Ether.");
-        balances[msg.sender] += msg.value;
-        emit Deposit(msg.sender, msg.value);
+    function depositEther() public payable {
+        require(msg.value > 0, "A positive amount of Ether must be deposited.");
+        accountBalances[msg.sender] += msg.value;
+        emit EtherDeposited(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 _amount) public hasFunds(_amount) {
-        balances[msg.sender] -= _amount;
-        payable(msg.sender).transfer(_amount);
-        emit Withdrawal(msg.sender, _amount);
+    function withdrawEther(uint256 _withdrawalAmount) public ensuresFundsAvailability(_withdrawalAmount) {
+        accountBalances[msg.sender] -= _withdrawalAmount;
+        payable(msg.sender).transfer(_withdrawalAmount);
+        emit EtherWithdrawn(msg.sender, _withdrawalAmount);
     }
 
-    function distributeInterest() public onlyOwner {
-        for (uint256 i = 0; i < depositors.length; i++) {
-            address depositor = depositors[i];
-            uint256 interest = (balances[depositor] * interestRate) / 100;
-            balances[depositor] += interest;
-            interestEarned[depositor] += interest;
-            emit InterestPaid(depositor, interest);
-        }
+    function distributeInterestToAccounts() public onlyContractOwner {
+        
     }
 
-    function setInterestRate(uint256 _newInterestRate) public onlyOwner {
-        interestRate = _newInterestRate;
-        emit InterestRateChanged(interestRate);
+    function updateAnnualInterestRate(uint256 _newAnnualInterestRatePercentage) public onlyContractOwner {
+        annualInterestRatePercentage = _newAnnualInterestRatePercentage;
+        emit AnnualInterestRateUpdated(annualInterestRatePercentage);
     }
 
-    function getAccountInfo(address _account) public view returns (uint256 balance, uint256 earnedInterest) {
-        return (balances[_account], interestEarned[_account]);
+    function getAccountDetails(address _account) public view returns (uint256 balance, uint256 interestEarned) {
+        return (accountBalances[_account], accountInterestEarnings[_account]);
     }
 
     receive() external payable {
-        deposit();
+        depositEther();
     }
 
     fallback() external payable {
-        deposit();
+        depositEther();
     }
 }
