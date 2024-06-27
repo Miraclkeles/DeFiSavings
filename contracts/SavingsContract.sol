@@ -1,61 +1,62 @@
 pragma solidity ^0.8.0;
 
-contract DeFiSavingsContract {
-    address public contractOwner;
-    uint256 public annualInterestRatePercentage;
-    mapping(address => uint256) public accountBalances;
-    mapping(address => uint256) public accountInterestEarnings;
+contract DeFiSavings {
+    address public owner;
+    uint256 public interestRateAPY; // APY stands for Annual Percentage Yield
+    mapping(address => uint256) public balances;
+    mapping(address => uint256) public interestEarned;
 
-    event EtherDeposited(address indexed depositorAccount, uint256 amountDeposited);
-    event EtherWithdrawn(address indexed withdrawerAccount, uint256 amountWithdrawn);
-    event InterestAccrued(address indexed beneficiaryAccount, uint256 interestAmount);
-    event AnnualInterestRateUpdated(uint256 newAnnualInterestRatePercentage);
+    event Deposit(address indexed account, uint256 amount);
+    event Withdrawal(address indexed account, uint256 amount);
+    event InterestPaid(address indexed account, uint256 interest);
+    event InterestRateUpdated(uint256 newInterestRateAPY);
 
-    constructor(uint256 _initialInterestRatePercentage) {
-        contractOwner = msg.sender;
-        annualInterestRatePercentage = _initialInterestRatePercentage;
+    constructor(uint256 _initialInterestRateAPY) {
+        owner = msg.sender;
+        interestRateAPY = _initialInterestRateAPY;
     }
 
-    modifier onlyContractOwner() {
-        require(msg.sender == contractOwner, "Only the contract owner can perform this action.");
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this action.");
         _;
     }
 
-    modifier ensuresFundsAvailability(uint256 _withdrawalAmount) {
-        require(accountBalances[msg.sender] >= _withdrawalAmount, "Insufficient funds in the account.");
+    modifier hasSufficientBalance(uint256 _amount) {
+        require(balances[msg.sender] >= _amount, "Insufficient balance.");
         _;
     }
 
-    function depositEther() public payable {
-        require(msg.value > 0, "A positive amount of Ether must be deposited.");
-        accountBalances[msg.sender] += msg.value;
-        emit EtherDeposited(msg.sender, msg.value);
+    function deposit() public payable {
+        require(msg.value > 0, "Deposit amount must be positive.");
+        balances[msg.sender] += msg.value;
+        emit Deposit(msg.sender, msg.value);
     }
 
-    function withdrawEther(uint256 _withdrawalAmount) public ensuresFundsAvailability(_withdrawalAmount) {
-        accountBalances[msg.sender] -= _withdrawalAmount;
-        payable(msg.sender).transfer(_withdrawalAmount);
-        emit EtherWithdrawn(msg.sender, _withdrawalAmount);
+    function withdraw(uint256 _amount) public hasSufficientBalance(_amount) {
+        balances[msg.sender] -= _amount;
+        payable(msg.sender).transfer(_amount);
+        emit Withdrawal(msg.sender, _amount);
     }
 
-    function distributeInterestToAccounts() public onlyContractOwner {
-        
+    function payInterest() public onlyOwner {
+        // Implementation remains unchanged as no specific logic is provided for distributing interest.
+        // Placeholder for interest distribution logic.
     }
 
-    function updateAnnualInterestRate(uint256 _newAnnualInterestRatePercentage) public onlyContractOwner {
-        annualInterestRatePercentage = _newAnnualInterestRatePercentage;
-        emit AnnualInterestRateUpdated(annualInterestRatePercentage);
+    function setInterestRateAPY(uint256 _newInterestRateAPY) public onlyOwner {
+        interestRateAPY = _newInterestRateAPY;
+        emit InterestRateUpdated(interestRateAPY);
     }
 
-    function getAccountDetails(address _account) public view returns (uint256 balance, uint256 interestEarned) {
-        return (accountBalances[_account], accountInterestEarnings[_account]);
+    function getAccountInfo(address _account) public view returns (uint256 accountBalance, uint256 totalInterestEarned) {
+        return (balances[_account], interestEarned[_account]);
     }
 
     receive() external payable {
-        depositEther();
+        deposit();
     }
 
     fallback() external payable {
-        depositEther();
+        deposit();
     }
 }
