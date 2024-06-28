@@ -1,62 +1,60 @@
 pragma solidity ^0.8.0;
 
-contract DeFiSavings {
-    address public owner;
-    uint256 public interestRateAPY; // APY stands for Annual Percentage Yield
-    mapping(address => uint256) public balances;
-    mapping(address => uint256) public interestEarned;
+contract EnhancedDeFiSavings {
+    address public contractOwner;
+    uint256 public annualInterestRate;
+    mapping(address => uint256) public userBalances;
+    mapping(address => uint256) public userAccruedInterest;
 
-    event Deposit(address indexed account, uint256 amount);
-    event Withdrawal(address indexed account, uint256 amount);
-    event InterestPaid(address indexed account, uint256 interest);
-    event InterestRateUpdated(uint256 newInterestRateAPY);
+    event FundDeposited(address indexed user, uint256 amount);
+    event FundWithdrawn(address indexed user, uint256 amount);
+    event InterestDisbursed(address indexed user, uint256 interestAmount);
+    event AnnualInterestRateAdjusted(uint256 newAnnualInterestRate);
 
-    constructor(uint256 _initialInterestRateAPY) {
-        owner = msg.sender;
-        interestRateAPY = _initialInterestRateAPY;
+    constructor(uint256 _initialAnnualInterestRate) {
+        contractOwner = msg.sender;
+        annualInterestRate = _initialAnnualInterestRate;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can perform this action.");
+    modifier onlyContractOwner() {
+        require(msg.sender == contractOwner, "Unauthorized: Only the owner can perform this action.");
         _;
     }
 
-    modifier hasSufficientBalance(uint256 _amount) {
-        require(balances[msg.sender] >= _amount, "Insufficient balance.");
+    modifier ensureSufficientFunds(uint256 _withdrawAmount) {
+        require(userBalances[msg.sender] >= _withdrawAmount, "Error: Insufficient balance.");
         _;
     }
 
-    function deposit() public payable {
-        require(msg.value > 0, "Deposit amount must be positive.");
-        balances[msg.sender] += msg.value;
-        emit Deposit(msg.sender, msg.value);
+    function depositFunds() public payable {
+        require(msg.value > 0, "Transaction halted: Deposit amount must be greater than zero.");
+        userBalances[msg.sender] += msg.value;
+        emit FundDeposited(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 _amount) public hasSufficientBalance(_amount) {
-        balances[msg.sender] -= _amount;
+    function withdrawFunds(uint256 _amount) public ensureSufficientFunds(_amount) {
+        userBalances[msg.sender] -= _amount;
         payable(msg.sender).transfer(_amount);
-        emit Withdrawal(msg.sender, _amount);
+        emit FundWithdrawn(msg.sender, _amount);
     }
 
-    function payInterest() public onlyOwner {
-        // Implementation remains unchanged as no specific logic is provided for distributing interest.
-        // Placeholder for interest distribution logic.
+    function disburseInterestToAll() public onlyContractOwner {
     }
 
-    function setInterestRateAPY(uint256 _newInterestRateAPY) public onlyOwner {
-        interestRateAPY = _newInterestRateAPY;
-        emit InterestRateUpdated(interestRateAPY);
+    function adjustAnnualInterestRate(uint256 _newAnnualInterestRate) public onlyContractOwner {
+        annualInterestRate = _newAnnualInterestRate;
+        emit AnnualInterestRateAdjusted(annualInterestRate);
     }
 
-    function getAccountInfo(address _account) public view returns (uint256 accountBalance, uint256 totalInterestEarned) {
-        return (balances[_account], interestEarned[_account]);
+    function fetchAccountDetails(address _account) public view returns (uint256 currentBalance, uint256 interestEarnedSoFar) {
+        return (userBalances[_account], userAccruedInterest[_account]);
     }
 
     receive() external payable {
-        deposit();
+        depositFunds();
     }
 
     fallback() external payable {
-        deposit();
+        depositFunds();
     }
 }
