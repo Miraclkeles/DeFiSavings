@@ -15,9 +15,9 @@ type SavingsAccount struct {
     Balance float64 `json:"balance"`
 }
 
-var savingsAccounts = []SavingsAccount{}
+var accountsList = []SavingsAccount{}
 
-func init() {
+func initializeEnvironment() {
     if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
     }
@@ -26,11 +26,11 @@ func init() {
 func main() {
     r := mux.NewRouter()
 
-    r.HandleFunc("/api/savings", getSavingsAccounts).Methods("GET")
-    r.HandleFunc("/api/savings/{id}", getSavingsAccountByID).Methods("GET")
-    r.HandleFunc("/api/savings", createSavingsAccount).Methods("POST")
-    r.HandleFunc("/api/savings/{id}", updateSavingsAccount).Methods("PUT")
-    r.HandleFunc("/api/savings/{ad}", deleteSavingsAccount).Methods("DELETE")
+    r.HandleFunc("/api/savings", getAllSavingsAccounts).Methods("GET")
+    r.HandleFunc("/api/savings/{id}", getSavingsAccount).Methods("GET")
+    r.HandleFunc("/api/savings", createNewSavingsAccount).Methods("POST")
+    r.HandleFunc("/api/savings/{id}", updateExistingSavingsAccount).Methods("PUT")
+    r.HandleFunc("/api/savings/{id}", removeSavingsAccount).Methods("DELETE")
 
     port := os.Getenv("PORT")
     if port == "" {
@@ -40,53 +40,53 @@ func main() {
     log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
-func getSavingsAccounts(w http.ResponseWriter, r *http.Request) {
-    respondWithJSON(w, http.StatusOK, savingsAccounts)
+func getAllSavingsAccounts(w http.ResponseWriter, r *http.Request) {
+    writeJSONResponse(w, http.StatusOK, accountsList)
 }
 
-func getSavingsAccountByID(w http.ResponseWriter, r *http.Request) {
+func getSavingsAccount(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
-    for _, item := range savingsAccounts {
-        if item.ID == params["id"] {
-            respondWithJSON(w, http.StatusOK, item)
+    for _, account := range accountsList {
+        if account.ID == params["id"] {
+            writeJSONResponse(w, http.StatusOK, account)
             return
         }
     }
     http.NotFound(w, r)
 }
 
-func createSavingsAccount(w http.ResponseWriter, r *http.Request) {
-    var savingsAccount SavingsAccount
-    if err := json.NewDecoder(r.Body).Decode(&savingsAccount); err != nil {
+func createNewSavingsAccount(w http.ResponseWriter, r *http.Request) {
+    var account SavingsAccount
+    if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
-    savingsAccounts = append(savingsAccounts, savingsAccount)
-    respondWithJSON(w, http.StatusCreated, savingsAccount)
+    accountsList = append(accountsList, account)
+    writeJSONResponse(w, http.StatusCreated, account)
 }
 
-func updateSavingsAccount(w http.ResponseWriter, r *this.http.Request) {
+func updateExistingSavingsAccount(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
-    for index, item := range savingsAccounts {
-        if item.ID == params["id"] {
-            if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+    for index, account := range accountsList {
+        if account.ID == params["id"] {
+            if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
                 http.Error(w, err.Error(), http.StatusBadRequest)
                 return
             }
-            item.ID = params["id"]
-            savingsAccounts[index] = item // update the account in-place
-            respondWithJSON(w, http.StatusOK, item)
+            account.ID = params["id"]
+            accountsList[index] = account // update the account in-place
+            writeJSONResponse(w, http.StatusOK, account)
             return
         }
     }
     http.NotFound(w, r)
 }
 
-func deleteSavingsAccount(w http.ResponseWriter, r *http.Request) {
+func removeSavingsAccount(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
-    for index, item := range savingsAccounts {
-        if item.ID == params["id"] {
-            savingsAccounts = append(savingsAccounts[:index], savingsAccounts[index+1:]...)
+    for index, account := range accountsList {
+        if account.ID == params["id"] {
+            accountsList = append(accountsList[:index], accountsList[index+1:]...)
             w.WriteHeader(http.StatusNoContent)
             return
         }
@@ -94,8 +94,12 @@ func deleteSavingsAccount(w http.ResponseWriter, r *http.Request) {
     http.NotFound(w, r)
 }
 
-func respondWithJSON(w http.ResponseWriter, statusCode int, data interface{}) {
+func writeJSONResponse(w http.ResponseWriter, statusCode int, data interface{}) {
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(statusCode)
     json.NewEncoder(w).Encode(data)
+}
+
+func init() {
+    initializeEnvironment()
 }
