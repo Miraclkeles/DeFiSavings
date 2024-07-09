@@ -1,65 +1,65 @@
 package main
 
 import (
-	"errors"
-	"os"
-	"strconv"
+    "errors"
+    "os"
+    "strconv"
 )
 
 type SavingsAccount struct {
-	Balance float64
+    Balance float64
 }
 
-type DepositRequest struct {
-	Amount float64
+type DepositOperation struct {
+    AmountToDeposit float64
 }
 
-type WithdrawRequest struct {
-	Amount float64
+type WithdrawalOperation struct {
+    AmountToWithdraw float64
 }
 
 func NewSavingsAccount(initialBalance float64) *SavingsAccount {
-	return &SavingsAccount{Balance: initialBalance}
+    return &SavingsAccount{Balance: initialBalance}
 }
 
-func (sa *SavingsAccount) Deposit(req DepositRequest) error {
-	if req.Amount <= 0 {
-		return errors.New("deposit amount must be greater than 0")
-	}
-	sa.Balance += req.Amount
-	return nil
+func (account *SavingsAccount) Deposit(deposit DepositOperation) error {
+    if deposit.AmountToDeposit <= 0 {
+        return errors.New("deposit amount must be positive")
+    }
+    account.Balance += deposit.AmountToDeposit
+    return nil
 }
 
-func (sa *SavingsAccount) Withdraw(req WithdrawRequest) error {
-	if req.Amount <= 0 {
-		return errors.New("withdrawal amount must be greater than 0")
-	}
-	if req.Amount > sa.Balance {
-		return errors.New("insufficient funds for withdrawal")
-	}
-	sa.Balance -= req.Amount
-	return nil
+func (account *SavingsAccount) Withdraw(withdrawal WithdrawalOperation) error {
+    if withdrawal.AmountToWithdraw <= 0 {
+        return errors.New("withdrawal amount must be positive")
+    }
+    if withdrawal.AmountToWithdraw > account.Balance {
+        return errors.New("insufficient balance for withdrawal")
+    }
+    account.Balance -= withdrawal.AmountToWithdraw
+    return nil
 }
 
 func main() {
-	initialBalanceVal, err := strconv.ParseFloat(os.Getenv("INITIAL_BALANCE"), 64)
-	if err != nil {
-		panic("Invalid initial balance value.")
-	}
+    initialBalanceEnv, err := strconv.ParseFloat(os.Getenv("INITIAL_BALANCE"), 64)
+    if err != nil {
+        panic("Invalid value for initial balance.")
+    }
 
-	account := NewSavingsAccount(initialBalanceVal)
-	depositReq := DepositRequest{Amount: 1000.50}
-	withdrawReq := WithdrawRequest{Amount: 500.25}
+    savingsAccount := NewSavingsAccount(initialBalanceEnv)
+    depositOperation := DepositOperation{AmountToDeposit: 1000.50}
+    withdrawalOperation := WithdrawalOperation{AmountToWithdraw: 500.25}
 
-	err = account.Deposit(depositReq)
-	if err != nil {
-		panic(err)
-	}
+    err = savingsAccount.Deposit(depositOperation)
+    if err != nil {
+        panic(err)
+    }
 
-	err = account.Withdraw(withdrawReq)
-	if err != nil {
-		panic(err)
-	}
+    err = savingsAccount.Withdraw(withdrawalOperation)
+    if err != nil {
+    panic(err)
+    }
 
-	println("Current balance: $", account.Balance)
+    println("Current balance: $", savingsAccount.Balance)
 }
